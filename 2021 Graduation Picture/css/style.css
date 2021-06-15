@@ -1,0 +1,34 @@
+.main {
+	margin: auto;
+	border: 1px solid;
+    border-color: black;
+	background-color:white;
+	padding-left:10%;
+	padding-right:10%;
+	padding-top:3%;
+}
+
+@font-face
+{
+    font-family: 清松手写体2;
+    src: url(../font/font.ttf);
+}
+
+body{
+	background-color:lightgreen;
+	font-family:清松手写体2;
+}
+
+p{
+	text-align:center;
+	font-size:18px;
+}
+
+h2{
+	font-size:25px;
+}
+
+pic{
+	text-align:center;
+	float:left;
+}
