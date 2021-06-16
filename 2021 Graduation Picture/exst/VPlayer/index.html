@@ -59,8 +59,8 @@
 		    var url = window.document.location.href.toString();
 		    var u = url.indexOf("?");
 			u=url.substr(u+1);
-		    if(typeof(u[1]) == "string"){
-		        u = u[1].split("&");
+		    if(typeof(u) == "string"){
+		        u = u.split("&");
 		        var get = {};
 		        for(var i in u){
 		            var j = u[i].split("=");
