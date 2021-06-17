@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>初2021级20班毕业班级测试题(B卷)</title>
+		<style>@import url(./css/style.css)</style>
+		<script src="./js/jQuery.js"></script>
+		<!-- <script src="./js/jsencrypt.min.js"></script> -->
+	</head>
+	<body>
+		<!-- <script>
+			function encode(string)
+			{
+				var public_key=ReadFile("public.key");
+				var encrypt=new JSEncrypt();
+				encrypt.setPublicKey(public_key);
+				var encrypted=encrypt.encrypt(string);
+				return encrypted;
+			}
+			function decode(string)
+			{
+				var private_key=ReadFile("private.key");
+				var decrypt = new JSEncrypt();
+				decrypt.setPrivateKey(private_key);
+				var uncrypted = decrypt.decrypt(string);
+				return uncrypted;
+			}
+			function ReadFile(Path)
+			{
+				htmlobj=$.ajax({url:Path,async:false});
+				var temp=htmlobj.responseText;
+				return temp;
+			}
+		</script> -->
+		<script>
+			var api_address="http://localhost:81/3/api.php";
+			function isJSON(str) {
+			    if (typeof str == 'string') {
+			        try {
+			            var obj=JSON.parse(str);
+			            if(typeof obj == 'object' && obj ){
+			                return true;
+			            }else{
+			                return false;
+			            }
+			
+			        } catch(e) {
+			            return false;
+			        }
+			    }
+				return false;
+			}
+			function build(now,obj)
+			{
+				if (obj["type"]!=undefined)
+				{
+					if (obj["type"]=="choice") {if (obj["choice"]!=""&&obj["choice"]!=undefined) document.getElementById(obj["type"]+now+"-"+(obj["choice"].charCodeAt()-64)).checked=true;}
+					else if (obj["type"]=="select") 
+					{
+						if (obj["choice"]!=""&&obj["choice"]!=undefined) document.getElementById(obj["type"]+now+"-"+(obj["choice"].charCodeAt()-64)).selected=true;
+						else document.getElementById(obj["type"]+now+"-0").selected=true;
+					}
+					else if (obj["type"]=="judge")
+					{
+						if (obj["choice"]=="yes") document.getElementById("judge"+now+"-1").checked=true;
+						else if (obj["choice"]=="no") document.getElementById("judge"+now+"-2").checked=true;
+					}
+					else document.getElementById(obj["type"]+now).value=obj["answer"];
+				}
+				for (var i=0;i<obj.length;i++)
+				{
+					now=String(now);
+					build(((now!="")?now+"-"+i:i),obj[i]);
+				}
+			}
+			function removeHTMLTag(str) 
+			{            
+				str = str.replace(/<\/?[^>]*>/g,''); //去除HTML tag
+			    str = str.replace(/[ | ]*\n/g,'\n'); //去除行尾空白
+			    str=str.replace(/&nbsp;/ig,'');//去掉&nbsp;
+			    return str;
+			}
+			function submit(now,obj,final_version)
+			{
+				if (obj["type"]!=undefined)
+				{
+					if (obj["type"]=="choice")
+					{
+						obj["choice"]=$("input[name='choice"+now+"']:checked").val();
+						if (obj["choice"]!=undefined) obj["answer"]=$("label[for='choice"+now+"-"+(obj["choice"].charCodeAt()-64)+"']").text();
+						else obj["choice"]="";
+					}
+					else if (obj["type"]=="select")
+					{
+						obj["choice"]=document.getElementById("select"+now).value;
+						if (obj["choice"]!="#") obj["answer"]=$("#select"+now+"-"+(obj["choice"].charCodeAt()-64)).text();
+						else obj["choice"]="";
+					}
+					else if (obj["type"]=="judge") obj["choice"]=$("input[name='judge"+now+"']:checked").val();
+					else obj["answer"]=document.getElementById(obj["type"]+now).value;
+				}
+				for (var i=0;i<obj.length;i++) 
+				{
+					now=String(now);
+					submit(((now!="")?now+"-"+i:i),obj[i],final_version);
+				}
+			}
+			var $_GET = (function(){
+			    var url = window.document.location.href.toString();
+			    var u = url.indexOf("?");
+				u=url.substr(u+1);
+			    if(typeof(u[1]) == "string"){
+			        u = u.split("&");
+			        var get = {};
+			        for(var i in u){
+			            var j = u[i].split("=");
+			            get[j[0]] = j[1];
+			        }
+			        return get;
+			    } else {
+			        return {};
+			    }
+			})();
+			var json="";
+			var obj;
+			$.ajax(
+			{
+				type: "POST",
+				url: api_address,
+				data: {purpose:"verify",id:$_GET['id']},
+				success: function(msg){
+					if (isJSON(msg))
+					{
+						json=msg;obj=JSON.parse(json);
+						build("",obj);
+						eid=self.setInterval(function(){
+							submit("",obj,0);
+							document.getElementById("input0-2").value=$_GET["id"];
+							var new_json=JSON.stringify(obj);
+							$.ajax(
+							{
+								type: "POST",
+								url: api_address,
+								data: {purpose:"submit",id:$_GET['id'],json:new_json,finish:0},
+								success: function(msg){
+									console.log(msg);
+								}
+							});
+						},1000);
+					}
+					else if (msg=="0")
+					{
+						alert("验证失败:该id不存在或已完成答题");
+						window.history.back(-1);
+					}
+					else
+					{
+						alert("验证失败:"+msg+"\n请截图并联系网站管理者进行检查");
+						window.history.back(-1);
+					}
+				}
+			});
+			function save()
+			{
+				submit("",obj,1);
+				new_json=JSON.stringify(obj);
+				$.ajax(
+				{
+					type: "POST",
+					url: api_address,
+					data: {purpose:"submit",id:$_GET['id'],json:new_json,finish:0},
+					success: function(msg){
+						if (msg=="上载成功") alert("保存成功");
+						else alert("保存失败:"+msg);
+					}
+				});
+			}
+			function submit_answer()
+			{
+				submit("",obj,1);
+				new_json=JSON.stringify(obj);
+				$.ajax(
+				{
+					type: "POST",
+					url: api_address,
+					data: {purpose:"submit",id:$_GET['id'],json:new_json,finish:1},
+					success: function(msg){
+						if (msg=="上载成功")
+						{
+							alert("提交成功");
+							window.location.href="//pic.littleyang.ml/2021%20Graduation%20Picture/";
+						}
+						else alert("提交失败:"+msg);
+					}
+				});
+			}
+		</script>
+		<div class="main" id="main">
+			<center><h1>初2021级20班毕业班级测试题(B卷)</h1></center>
+			<center><p>(全卷共四大题，满分100分)</p></center>
+			<p>注意事项:</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;1.本文档含有自动保存功能,每秒钟保存一次进度.你也可以通过点击本文档底部的按钮进行手动保存.</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;2.若文档未能够保存成功,则请在电脑端上访问该链接,并按F12打开开发者工具的控制台(Console)选项查找无法保存的原因</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;3.本文档设有提交功能.若已提交,则无法再访问该链接.</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;4.本试卷适用人群:因材施教毕业班教师</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;5.网页制作&听力制作:LittleYang</p>
+			<center><h3>个人信息填写</h3></center>
+			<p class="input-p">1. 大名:&nbsp;<input type="text" id="input0-0" class="input" placeholder="在此处填入您的姓名"></p>
+			<p class="input-p">2. 别称:&nbsp;<input type="text" id="input0-1" class="input" placeholder="在此处填入您的别称"></p>
+			<p class="input-p">3. 考号:&nbsp;<input type="text" id="input0-2" class="input" disabled="true"></p>
+			<p>4. 性别</p>
+			<div id="choice0-3">
+				<div class="top-choice">
+					<input type="radio" name="choice0-3" value="A" id="choice0-3-1"><label for="choice0-3-1">♂ 男同胞</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice0-3" value="B" id="choice0-3-2"><label for="choice0-3-2">♀ 女同胞</label>
+				</div>
+			</div>
+			<p class="input-p">5. 所教科目:&nbsp;
+				<select class="input" id="select0-4">
+					<option value="#" id="select0-4-0">-- 请选择 --</option>
+					<option value="A" id="select0-4-1">语文</option>
+					<option value="B" id="select0-4-2">数学</option>
+					<option value="C" id="select0-4-3">英语</option>
+					<option value="D" id="select0-4-4">物理</option>
+					<option value="E" id="select0-4-5">化学</option>
+					<option value="F" id="select0-4-6">政治</option>
+					<option value="G" id="select0-4-7">历史</option>
+					<option value="H" id="select0-4-8">音乐</option>
+					<option value="I" id="select0-4-9">美术</option>
+					<option value="J" id="select0-4-10">体育</option>
+					<option value="K" id="select0-4-11">信息</option>
+				</select>
+			</p>
+			<p class="input-p">6. 生日:&nbsp;<input type="date" id="input0-5" class="input"></p>
+			<p class="input-p">7. 血型:&nbsp;
+				<select class="input" id="select0-6">
+					<option value="#" id="select0-6-0">-- 请选择 --</option>
+					<option value="A" id="select0-6-1">A</option>
+					<option value="B" id="select0-6-2">B</option>
+					<option value="C" id="select0-6-3">O</option>
+					<option value="D" id="select0-6-4">AB</option>
+					<option value="E" id="select0-6-5">未知</option>
+				</select>
+			</p>
+			<p class="input-p">8. 手机:&nbsp;<input type="text" id="input0-7" class="input" placeholder="在此处填入您的手机号"></p>
+			<p class="input-p">9. 扣扣:&nbsp;<input type="text" id="input0-8" class="input" placeholder="在此处填入您的QQ号"></p>
+			<p class="input-p">10. 微信:&nbsp;<input type="text" id="input0-9" class="input" placeholder="在此处填入您的微信号"></p>
+			<p class="input-p">11. B站号:&nbsp;<input type="text" id="input0-10" class="input" placeholder="在此处填入您的B站UID"></p>
+			<p class="input-p">12. 我家在:&nbsp;<input type="text" id="input0-11" class="input" placeholder="在此处填入您的地址"></p>
+			<p class="input-p">13. 必杀技:&nbsp;<input type="text" id="input0-12" class="input" placeholder="呃呃呃"></p>
+			<p class="input-p">14. 最爱吃:&nbsp;<input type="text" id="input0-13" class="input" placeholder="呃呃呃"></p>
+			<p class="input-p">15. 自我评价:&nbsp;</p>
+			<div id="choice0-14-0">
+				<div class="top-choice">
+					<input type="radio" name="choice0-14-0" value="A" id="choice0-14-0-1"><label for="choice0-14-0-1">宅男</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice0-14-0" value="B" id="choice0-14-0-2"><label for="choice0-14-0-2">宅女</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice0-14-0" value="C" id="choice0-14-0-3"><label for="choice0-14-0-3">不宅</label>
+				</div>
+			</div>
+			<br>
+			<div id="choice0-14-1">
+				<div class="top-choice">
+					<input type="radio" name="choice0-14-1" value="A" id="choice0-14-1-1"><label for="choice0-14-1-1">高富帅</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice0-14-1" value="B" id="choice0-14-1-2"><label for="choice0-14-1-2">白富美</label>
+				</div>
+			</div>
+			
+			<center><h3>I卷(共60分)</h3></center>
+			<p>一、判断题(15*2=30)</p>
+			<p>1. 20班于初一下学期成立并正式行课</p>
+			<div id="judge1-0">
+				<div class="top-choice">
+					<input type="radio" name="judge1-0" value="yes" id="judge1-0-1"><label for="judge1-0-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-0" value="no" id="judge1-0-2"><label for="judge1-0-2">错误</label>
+				</div>
+			</div>
+			<p>2. 20班曾与15班一起在2019年艺术节上台表演诗朗诵《育才赋》</p>
+			<div id="judge1-1">
+				<div class="top-choice">
+					<input type="radio" name="judge1-1" value="yes" id="judge1-1-1"><label for="judge1-1-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-1" value="no" id="judge1-1-2"><label for="judge1-1-2">错误</label>
+				</div>
+			</div>
+			<p>3. 20班与21班同为因材施教班</p>
+			<div id="judge1-2">
+				<div class="top-choice">
+					<input type="radio" name="judge1-2" value="yes" id="judge1-2-1"><label for="judge1-2-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-2" value="no" id="judge1-2-2"><label for="judge1-2-2">错误</label>
+				</div>
+			</div>
+			<p>4. 20班与21班与初三上学期半期考试前被重新组合分班</p>
+			<div id="judge1-3">
+				<div class="top-choice">
+					<input type="radio" name="judge1-3" value="yes" id="judge1-3-1"><label for="judge1-3-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-3" value="no" id="judge1-3-2"><label for="judge1-3-2">错误</label>
+				</div>
+			</div>
+			<p>5. 张程鑫老师带领20班与21班与分班当天上午进行了折纸飞机活动</p>
+			<div id="judge1-4">
+				<div class="top-choice">
+					<input type="radio" name="judge1-4" value="yes" id="judge1-4-1"><label for="judge1-4-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-4" value="no" id="judge1-4-2"><label for="judge1-4-2">错误</label>
+				</div>
+			</div>
+			<p>6. 李秉蔚同学被周祖松教练的魅力深深折服</p>
+			<div id="judge1-5">
+				<div class="top-choice">
+					<input type="radio" name="judge1-5" value="yes" id="judge1-5-1"><label for="judge1-5-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-5" value="no" id="judge1-5-2"><label for="judge1-5-2">错误</label>
+				</div>
+			</div>
+			<p>7. 初三上学期首次进行了两次期末校考</p>
+			<div id="judge1-6">
+				<div class="top-choice">
+					<input type="radio" name="judge1-6" value="yes" id="judge1-6-1"><label for="judge1-6-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-6" value="no" id="judge1-6-2"><label for="judge1-6-2">错误</label>
+				</div>
+			</div>
+			<p>8. 2020年是重庆教育改革第一年</p>
+			<div id="judge1-7">
+				<div class="top-choice">
+					<input type="radio" name="judge1-7" value="yes" id="judge1-7-1"><label for="judge1-7-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-7" value="no" id="judge1-7-2"><label for="judge1-7-2">错误</label>
+				</div>
+			</div>
+			<p>9. 20班没有较好的抗压能力，导致许多同学成了“癫子娃儿”</p>
+			<div id="judge1-8">
+				<div class="top-choice">
+					<input type="radio" name="judge1-8" value="yes" id="judge1-8-1"><label for="judge1-8-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-8" value="no" id="judge1-8-2"><label for="judge1-8-2">错误</label>
+				</div>
+			</div>
+			<p>10. 20班的承诺已被陈清勇校长收回并因此成为了一种梗</p>
+			<div id="judge1-9">
+				<div class="top-choice">
+					<input type="radio" name="judge1-9" value="yes" id="judge1-9-1"><label for="judge1-9-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-9" value="no" id="judge1-9-2"><label for="judge1-9-2">错误</label>
+				</div>
+			</div>
+			<p>11. 20班的老师都已经被轮换一遍了</p>
+			<div id="judge1-10">
+				<div class="top-choice">
+					<input type="radio" name="judge1-10" value="yes" id="judge1-10-1"><label for="judge1-10-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-10" value="no" id="judge1-10-2"><label for="judge1-10-2">错误</label>
+				</div>
+			</div>
+			<p>12. 20班于分班后停掉了竞赛，21班于一诊后停掉了竞赛</p>
+			<div id="judge1-11">
+				<div class="top-choice">
+					<input type="radio" name="judge1-11" value="yes" id="judge1-11-1"><label for="judge1-11-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-11" value="no" id="judge1-11-2"><label for="judge1-11-2">错误</label>
+				</div>
+			</div>
+			<p>13. 20班的娃儿一个个都疯颠颠的</p>
+			<div id="judge1-12">
+				<div class="top-choice">
+					<input type="radio" name="judge1-12" value="yes" id="judge1-12-1"><label for="judge1-12-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-12" value="no" id="judge1-12-2"><label for="judge1-12-2">错误</label>
+				</div>
+			</div>
+			<p>14. 20班的老师都具有较高的颜值</p>
+			<div id="judge1-13">
+				<div class="top-choice">
+					<input type="radio" name="judge1-13" value="yes" id="judge1-13-1"><label for="judge1-13-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-13" value="no" id="judge1-13-2"><label for="judge1-13-2">错误</label>
+				</div>
+			</div>
+			<p>15. 原20班的同学大部分都认为庞晴霞老师在所有教过他们的老师中拥有最多的梗</p>
+			<div id="judge1-14">
+				<div class="top-choice">
+					<input type="radio" name="judge1-14" value="yes" id="judge1-14-1"><label for="judge1-14-1">正确</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="judge1-14" value="no" id="judge1-14-2"><label for="judge1-14-2">错误</label>
+				</div>
+			</div>
+			<p>二、客观题(10)</p>
+			<p>16. 造成20班的同学对自己的前途坐立不安的原因有哪些?(3)</p>
+			<textarea rows=5 id="textarea2-0"></textarea>
+			<p>17. 作为任教老师，您对20班的看法有哪些?(3)</p>
+			<textarea rows=5 id="textarea2-1"></textarea>
+			<p>18. 请描述一下5年以后我们会变成什么样?(2)</p>
+			<textarea rows=5 id="textarea2-2"></textarea>
+			<p>19. 谈谈您对20班的认识?(2)</p>
+			<textarea rows=5 id="textarea2-3"></textarea>
+			<p>三、小作文(20)</p>
+			<p>20. 对于已经毕业的20班学子们,作为老师,您还有什么话想要对他们说的呢?请在此写下来吧!</p>
+			<p>要求:</p>
+			<p>1. 文中可以出现真实人名,校名及其他相关信息</p>
+			<p>2. 字数不少于50字</p>
+			<p>3. 除诗歌外,文体不限</p>
+			<p>4. 请用中文或英文书写本文</p>
+			<textarea rows=20 id="textarea3-0"></textarea>
+			<center><h3>II卷(共40分)</h3></center>
+			<p>四、听力题(16*2.5=40)
+				&nbsp;&nbsp;试听听力:
+				<img src="./pic/playing.png" title="点我暂停播放试听听力" id="audio4-0-start" onclick=stop("4-0") style="cursor:pointer;display:none;position:relative;top:4px;" width=20px height=23px/>
+				<img src="./pic/stop.png" title="点我开始播放试听听力" id="audio4-0-stop" onclick=start("4-0") style="cursor:pointer;position:relative;top:4px;" width=20px height=23px/>
+				<audio id="audio4-0" src="./audio/try.mp3" preload="auto"></audio>
+				&nbsp;&nbsp;正式听力:
+				<img src="./pic/playing.png" title="点我停止播放正式听力" id="audio4-1-start" onclick=stop("4-1") style="cursor:pointer;display:none;position:relative;top:4px;" width=20px height=23px/>
+				<img src="./pic/stop.png" title="点我开始播放正式听力" id="audio4-1-stop" onclick=start("4-1") style="cursor:pointer;position:relative;top:4px;" width=20px height=23px/>
+				<audio id="audio4-1" src="./audio/final.mp3" preload="auto"></audio>
+				<script>
+					function start(id)
+					{
+						document.getElementById("audio"+id+"-start").style.display="";
+						console.log(document.getElementById("audio"+id+"-start"));
+						document.getElementById("audio"+id+"-stop").style.display="none";
+						document.getElementById("audio"+id).play();
+					}
+					function stop(id)
+					{
+						document.getElementById("audio"+id+"-stop").style.display="";
+						document.getElementById("audio"+id+"-start").style.display="none";
+						document.getElementById("audio"+id).pause();
+					}
+				</script>
+			</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;第一节，听一遍，根据你所听到的句子，从A,B,C三个选项中选出正确答案</p>
+			<p>21.</p>
+			<div id="choice4-0">
+				<div class="top-choice">
+					<input type="radio" name="choice4-0" value="A" id="choice4-0-1"><label for="choice4-0-1">Rechel</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-0" value="B" id="choice4-0-2"><label for="choice4-0-2">Mr.He</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-0" value="C" id="choice4-0-3"><label for="choice4-0-3">Miss Ren</label>
+				</div>
+			</div>
+			<p>22.</p>
+			<div id="choice4-1">
+				<div class="top-choice">
+					<input type="radio" name="choice4-1" value="A" id="choice4-1-1"><label for="choice4-1-1">Because you will left me after today.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-1" value="B" id="choice4-1-2"><label for="choice4-1-2">No,I'm not sad.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-1" value="C" id="choice4-1-3"><label for="choice4-1-3">Yes,I do.</label>
+				</div>
+			</div>
+			<p>23.</p>
+			<div id="choice4-2">
+				<div class="top-choice">
+					<input type="radio" name="choice4-2" value="A" id="choice4-2-1"><label for="choice4-2-1">Chinese.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-2" value="B" id="choice4-2-2"><label for="choice4-2-2">Math.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-2" value="C" id="choice4-2-3"><label for="choice4-2-3">English.</label>
+				</div>
+			</div>
+			<p>24.</p>
+			<div id="choice4-3">
+				<div class="top-choice">
+					<input type="radio" name="choice4-3" value="A" id="choice4-3-1"><label for="choice4-3-1">Yes,I'd like to.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-3" value="B" id="choice4-3-2"><label for="choice4-3-2">No,thanks.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-3" value="C" id="choice4-3-3"><label for="choice4-3-3">Hehe.</label>
+				</div>
+			</div>
+			<p>25.</p>
+			<div id="choice4-4">
+				<div class="top-choice">
+					<input type="radio" name="choice4-4" value="A" id="choice4-4-1"><label for="choice4-4-1">I don't think so.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-4" value="B" id="choice4-4-2"><label for="choice4-4-2">Good luck.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-4" value="C" id="choice4-4-3"><label for="choice4-4-3">Thanks.</label>
+				</div>
+			</div>
+			<p>26.</p>
+			<div id="choice4-5">
+				<div class="top-choice">
+					<input type="radio" name="choice4-5" value="A" id="choice4-5-1"><label for="choice4-5-1">No,I don't.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-5" value="B" id="choice4-5-2"><label for="choice4-5-2">You're welcome.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-5" value="C" id="choice4-5-3"><label for="choice4-5-3">Bad luck.</label>
+				</div>
+			</div>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;第二节，听一遍，根据你所听到的对话和问题，从A,B,C三个选项中选出正确答案</p>
+			<p>27.</p>
+			<div id="choice4-6">
+				<div class="top-choice">
+					<input type="radio" name="choice4-6" value="A" id="choice4-6-1"><label for="choice4-6-1">Mary.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-6" value="B" id="choice4-6-2"><label for="choice4-6-2">Mr.He.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-6" value="C" id="choice4-6-3"><label for="choice4-6-3">Mr.Zhang.</label>
+				</div>
+			</div>
+			<p>28.</p>
+			<div id="choice4-7">
+				<div class="top-choice">
+					<input type="radio" name="choice4-7" value="A" id="choice4-7-1"><label for="choice4-7-1">Steve.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-7" value="B" id="choice4-7-2"><label for="choice4-7-2">Gina.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-7" value="C" id="choice4-7-3"><label for="choice4-7-3">Photos.</label>
+				</div>
+			</div>
+			<p>29.</p>
+			<div id="choice4-8">
+				<div class="top-choice">
+					<input type="radio" name="choice4-8" value="A" id="choice4-8-1"><label for="choice4-8-1">Because she won't get into the senior Yucai Middle School.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-8" value="B" id="choice4-8-2"><label for="choice4-8-2">Because her teacher will teach her.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-8" value="C" id="choice4-8-3"><label for="choice4-8-3">Because her teacher don't get the notice to teach her.</label>
+				</div>
+			</div>
+			<p>30.</p>
+			<div id="choice4-9">
+				<div class="top-choice">
+					<input type="radio" name="choice4-9" value="A" id="choice4-9-1"><label for="choice4-9-1">Mr.Yang.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-9" value="B" id="choice4-9-2"><label for="choice4-9-2">The male speaker.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-9" value="C" id="choice4-9-3"><label for="choice4-9-3">The female speaker.</label>
+				</div>
+			</div>
+			<p>31.</p>
+			<div id="choice4-10">
+				<div class="top-choice">
+					<input type="radio" name="choice4-10" value="A" id="choice4-10-1"><label for="choice4-10-1">Straight.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-10" value="B" id="choice4-10-2"><label for="choice4-10-2">Useless.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-10" value="C" id="choice4-10-3"><label for="choice4-10-3">Boring.</label>
+				</div>
+			</div>
+			<p>32.</p>
+			<div id="choice4-11">
+				<div class="top-choice">
+					<input type="radio" name="choice4-11" value="A" id="choice4-11-1"><label for="choice4-11-1">Strange.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-11" value="B" id="choice4-11-2"><label for="choice4-11-2">Useless.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-11" value="C" id="choice4-11-3"><label for="choice4-11-3">Boring.</label>
+				</div>
+			</div>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;第三节，听两遍，根据你所听到的长对话，从A,B,C三个选项中选出正确答案</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;听下面一段对话，回答33-34小题</p>
+			<p>33.What may the female speaker do?</p>
+			<div id="choice4-12">
+				<div class="top-choice">
+					<input type="radio" name="choice4-12" value="A" id="choice4-12-1"><label for="choice4-12-1">Teacher.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-12" value="B" id="choice4-12-2"><label for="choice4-12-2">Writer.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-12" value="C" id="choice4-12-3"><label for="choice4-12-3">Singer.</label>
+				</div>
+			</div>
+			<p>34.When may the conversation happened?</p>
+			<div id="choice4-13">
+				<div class="top-choice">
+					<input type="radio" name="choice4-13" value="A" id="choice4-13-1"><label for="choice4-13-1">In the class.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-13" value="B" id="choice4-13-2"><label for="choice4-13-2">After class.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-13" value="C" id="choice4-13-3"><label for="choice4-13-3">At the meeting.</label>
+				</div>
+			</div>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;听下面一段对话，回答35-36小题</p>
+			<p>35.Who think the math was very easy?</p>
+			<div id="choice4-14">
+				<div class="top-choice">
+					<input type="radio" name="choice4-14" value="A" id="choice4-14-1"><label for="choice4-14-1">Ther male speaker.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-14" value="B" id="choice4-14-2"><label for="choice4-14-2">The female speaker.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-14" value="C" id="choice4-14-3"><label for="choice4-14-3">Miss Ren.</label>
+				</div>
+			</div>
+			<p>36.Who is good at English in our class?</p>
+			<div id="choice4-15">
+				<div class="top-choice">
+					<input type="radio" name="choice4-15" value="A" id="choice4-15-1"><label for="choice4-15-1">Rachel.</label>
+				</div>	
+				<div class="choice">
+					<input type="radio" name="choice4-15" value="B" id="choice4-15-2"><label for="choice4-15-2">Mr.He.</label>
+				</div>
+				<div class="choice">
+					<input type="radio" name="choice4-15" value="C" id="choice4-15-3"><label for="choice4-15-3">Mr.Zhang.</label>
+				</div>
+			</div>
+			<p style="text-align:right">出题人:LittleYang</p>
+			<p style="text-align:right">审题人:LittleYang</p>
+			<div style="text-align:center;">
+				<hr/>
+				<button onclick=submit_answer() title="提交后无法修改!!!">提交答案</button>
+				<button onclick=save() title="保存当前进度下次继续答题">保存进度</button>
+			</div>
+			<script>
+				adjust_main();adjust_main();adjust_main();
+				function adjust_main()
+				{
+					if (window.innerHeight>window.innerWidth*1.5) document.getElementById("main").style.width="80%";
+					else if (window.innerHeight>window.innerWidth) document.getElementById("main").style.width="60%";
+					else document.getElementById("main").style.width="40%";
+				}
+				window.onresize=function()
+				{
+					adjust_main();adjust_main();adjust_main();
+					adjust1();adjust1();adjust1();
+					adjust2();adjust2();adjust2();
+				};
+			</script>
+		</div>
+	</body>
+</html>

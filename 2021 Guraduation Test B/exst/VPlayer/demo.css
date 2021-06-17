@@ -1,0 +1,126 @@
+.mainContainer {
+    display: block;
+	width:100%;
+}
+
+#main 
+{
+	padding-left:10px;
+	padding-right:10px;
+}
+
+.video-container {
+    position: relative;
+}
+
+.video-container:before {
+    display: block;
+    content: "";
+    width: 100%;
+    padding-bottom: 56.25%;
+}
+
+.video-container > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+}
+
+.centeredVideo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+}
+
+.controls {
+    width: auto;
+	height: 50px;
+    text-align: left;
+	margin-top: 1%;
+    margin-left: 1%;
+    margin-right: 1%;
+	transition:opacity 0.5s;
+	opacity:0;
+}
+
+#line2:hover {cursor: pointer;}
+
+#main:hover > .controls {opacity:1;}
+
+#progress2 {transition:background-color 0.5s;}
+
+#main:hover ~ #progress2 {background-color:black;}
+
+#current2 {transition:background-color 0.5s;}
+
+#main:hover ~ #progress2 > #current2 {background-color:black;}
+
+#onload2 {transition:background-color 0.5s;}
+
+#main:hover ~ #progress2 > #onload2 {background-color:black;}
+
+.progress 
+{
+    cursor: pointer;
+	position:relative;
+	display:flex;
+	width:100%;
+	height: 2px;
+	border: 0px solid RGBA(255,255,255,0); 
+	border-radius: 2px 2px 2px 2px;
+	background-color: #333333;
+	transition: transform 0.5s;
+}
+
+.controls .progress:hover
+{
+	transform:scale(1,2);
+}
+
+.controls .image 
+{
+	position:absolute;
+	display:none;
+	width:7.125px;height:15px;
+	top:-7.75px;left:-7.125px;
+	transition: transform 0.5s,opacity 0.5s;
+	opacity:0;
+}
+
+.controls .progress:hover > .image
+{
+	display:block;
+	transform:scale(2,0.5);
+	opacity:1;
+}
+
+
+.progress .current
+{
+	width: 0%;
+	height: 100%;
+	border: 0px solid RGBA(255,255,255,0); 
+	border-radius: 2px 0px 0px 2px;
+	background-color: #00A1D6;
+	display:inline-block;
+}
+
+.progress .onload 
+{
+	width: 0%;
+	height: 100%;
+	border: 0px solid RGBA(255,255,255,0); 
+	border-radius: 0px 2px 2px 0px;
+	background-color: #717171;
+	display:inline-block;
+}

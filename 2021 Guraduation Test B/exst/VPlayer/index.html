@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="referrer" content="no-referrer">
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>育才新闻H5视频播放器v0.9.0</title>
+    <link rel="stylesheet" type="text/css" href="demo.css" />
+</head>
+
+<body style="width:100%;margin:0px;overflow:hidden">
+    <div class="mainContainer">
+		<div style="background-color:black" id="main">
+			<div style="height:58px;"><img src="./photo/4.png" style="position:relative;height:58px;width:60px;left:90.28%;top:calc( 90.28% + 58px );z-index:1000;opacity:0.7" id="img4" class="img4"/></div>
+			<div class="video-container"> 
+				<div>
+					<video name="videoElement" id="video" class="centeredVideo">
+						Your browser is too old which doesn't support HTML5 video.
+					</video>
+				</div>
+			</div>
+			<div class="controls" id="controls">
+				<div class="progress" style='float:left;' id="progress" onclick=flv_seekto()>
+					<div class="current" style='float:left'></div>
+					<img src='./photo/1.png' class="image" draggable="true" id="pic"/>
+					<div class="onload" style='float:left'></div>
+				</div>
+				<div id="line2" style="position:relative;display:inline-flex;width:100%">
+					<img src="./photo/2.png" id="start" style="margin-top:3px;position:relative;left:10px;top:10px;height:20px;width:19px;display:inline-block" onclick="flv_start()"/>
+					<div style="display:flex">
+						<p id="time" style="display:inline-block;color:white;margin-left:25px;font-family:-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Arial,PingFang SC,Hiragino Sans GB,Microsoft YaHei,sans-serif;font-size:15px;"></p>
+					</div>
+					<div style="display:inline-block;text-align:right;flex:1;margin-right:20px" id="control2">
+<!-- 						<img style="margin-top:3px;position:relative;left:10px;top:10px;height:17.5px;width:35px;display:inline-block" src="./photo/11.png" onclick="flv_fullscreen()"/>&nbsp;&nbsp;&nbsp;&nbsp;
+						<img style="margin-top:3px;position:relative;left:10px;top:11px;height:20px;width:20px;display:inline-block" src="./photo/10.png" onclick="flv_fullscreen()"/>&nbsp;&nbsp;&nbsp;&nbsp;
+						<img style="margin-top:3px;position:relative;left:10px;top:11px;height:20px;width:20px;display:inline-block" src="./photo/9.png" onclick="flv_fullscreen()"/>&nbsp;&nbsp;&nbsp;&nbsp; -->
+						<img style="margin-top:3px;position:relative;left:10px;top:12px;height:20px;width:22.5px;display:inline-block" src="./photo/8.png" onclick="picinpic()" id="img8"/>&nbsp;&nbsp;&nbsp;&nbsp;
+<!-- 						<img style="margin-top:3px;position:relative;left:10px;top:10px;height:17.5px;width:22.5px;display:inline-block" src="./photo/7.png" onclick="flv_fullscreen()"/>&nbsp;&nbsp;&nbsp;&nbsp;
+						<img style="margin-top:3px;position:relative;left:10px;top:10px;height:17.5px;width:22.5px;display:inline-block" src="./photo/6.png" onclick="flv_webfullscreen()"/>&nbsp;&nbsp;&nbsp;&nbsp; -->
+						<img style="margin-top:3px;position:relative;left:10px;top:11px;height:20px;width:20px;display:inline-block" src="./photo/5.png" onclick="flv_fullscreen()"/>
+					</div>
+				</div>
+				<br/>
+			</div>
+		</div>
+		<div class="progress" style='float:left;' id="progress2">
+			<div class="current" style='float:left' id="current2"></div>
+			<div class="onload" style='float:left' id="onload2"></div>
+		</div>
+	</div>
+
+    <script src="./js/flv.js"></script>
+    <script src="./js/jQuery.js"></script>
+    
+    <script>
+		
+		
+		var $_GET = (function(){
+		    var url = window.document.location.href.toString();
+		    var u = url.indexOf("?");
+			u=url.substr(u+1);
+		    if(typeof(u[1]) == "string"){
+		        u = u[1].split("&");
+		        var get = {};
+		        for(var i in u){
+		            var j = u[i].split("=");
+		            get[j[0]] = j[1];
+		        }
+		        return get;
+		    } else {
+		        return {};
+		    }
+		})();
+		var videourl=$_GET['src'];
+		var jsonurl="./test.json";
+		
+		
+		
+		
+		//进度条还是有些bug，下次记得修改哦~
+		//----LittleYang 2021/02/13
+		
+		var percent=(document.querySelector("#main").offsetWidth-20)/(document.querySelector("#main").offsetHeight-118);
+		var mainwindow=document.querySelector("#main");
+		var fullwidth=window.screen.width;
+			var w,h;
+			if (fullwidth>1152)
+			{
+				w=1132;
+				h=1132/percent;
+			}
+			if (w/percent+118>window.innerHeight)
+			{
+				h=window.innerHeight-118;
+				w=h*percent;
+			}
+			if (w+20>window.innerWidth)
+			{
+				w=window.innerWidth-20;
+				h=w/percent;
+			}
+			if (w>1132)
+			{
+				w=1132;
+				h=1132/percent;
+			}
+			if (w/percent+118>window.innerHeight)
+			{
+				h=window.innerHeight-118;
+				w=h*percent;
+			}
+			if (w+20>window.innerWidth)
+			{
+				w=window.innerWidth-20;
+				h=w/percent;
+			}
+			if (w>1132)
+			{
+				w=1132;
+				h=1132/percent;
+			}
+			mainwindow.style.width=w+"px";
+			mainwindow.style.height=h+118+"px";
+			mainwindow.style.marginLeft=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+			mainwindow.style.marginRight=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+			document.getElementById("progress2").style.width=w+20+"px";
+			document.getElementById("progress2").style.left=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+		var width=document.querySelector(".video-container").offsetWidth;
+		var height=document.querySelector(".video-container").offsetHeight;
+		
+		document.getElementById("img4").style.top=(height-document.querySelector(".video-container").offsetHeight/height*3)+"px";
+		document.getElementById("img4").style.left=(width-60-document.querySelector(".video-container").offsetWidth/width*72)+"px";
+		slideBtn=document.getElementById("pic");
+		slideBtn.onmousedown=function(event)
+		{
+		    event=event||window.event;
+		    var deltaX=event.clientX-slideBtn.offsetLeft;
+		    document.onmousemove=function(event)
+			{
+		        event=event||window.event;
+		        var nowleft=event.clientX-deltaX;
+		        if (nowleft<0) nowleft=0;
+		        if (nowleft>document.getElementById("progress").offsetWidth-slideBtn.offsetWidth) nowleft=document.getElementById("progress").offsetWidth-slideBtn.offsetWidth;
+		        slideBtn.style.left=nowleft+'px';
+		        var nowtime=(nowleft/document.getElementById("progress").offsetWidth)*video.duration;
+		        video.currentTime=nowtime;
+				player.play();
+		        return false;
+		    }
+		    document.onmouseup=function() 
+			{
+		        document.onmousemove=null;
+		    }
+		}
+		
+		$(".video-container").click(function()
+		{
+			flv_start();
+		});
+		
+		$(".img4").click(function()
+		{
+			flv_start();
+		});
+		
+        var checkBoxFields = ['isLive', 'withCredentials', 'hasAudio', 'hasVideo'];
+		var choice=[0,0,1,1];
+        var streamURL, mediaSourceURL;
+		var video=document.querySelector("video");
+		video.controls=false;
+		flv_load();
+		video.oncanplay = function () {
+			loadtime();
+		}	
+		// window.onresize=function(){
+		// 	if (fullwidth>1152)
+		// 	{
+		// 		w=1132;
+		// 		h=1132/percent;
+		// 	}
+		// 	if (w/percent+118>window.innerHeight)
+		// 	{
+		// 		h=window.innerHeight-118;
+		// 		w=h*percent;
+		// 	}
+		// 	if (w+20>window.innerWidth)
+		// 	{
+		// 		w=window.innerWidth-20;
+		// 		h=w/percent;
+		// 	}
+		// 	if (w>1132)
+		// 	{
+		// 		w=1132;
+		// 		h=1132/percent;
+		// 	}
+		// 	if (w/percent+118>window.innerHeight)
+		// 	{
+		// 		h=window.innerHeight-118;
+		// 		w=h*percent;
+		// 	}
+		// 	if (w+20>window.innerWidth)
+		// 	{
+		// 		w=window.innerWidth-20;
+		// 		h=w/percent;
+		// 	}
+		// 	if (w>1132)
+		// 	{
+		// 		w=1132;
+		// 		h=1132/percent;
+		// 	}
+		// 	mainwindow.style.width=w+"px";
+		// 	mainwindow.style.height=h+118+"px";
+		// 	document.getElementById("progress2").style.width=w+20+"px";
+		// 	document.getElementById("progress2").style.left=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+		// 	mainwindow.style.marginLeft=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+		// 	mainwindow.style.marginRight=(window.innerWidth-mainwindow.offsetWidth)/2+"px";
+		// 	loadpic();
+		// };
+		function min(a,b)
+		{
+			if (a>=b) return b;
+			else return a;
+		}
+		video.ontimeupdate = function flv_a() {
+				var percent = video.currentTime / video.duration * 100 + "%";
+				document.querySelector(".current").style.width = percent;
+				document.getElementById("current2").style.width = percent;
+				document.querySelector(".image").style.left = percent;
+				var percent1 = (min(video.buffered.end(0)-video.buffered.start(0),video.duration)-video.currentTime) / video.duration * 100;
+				if (percent1<0) percent1=0;
+				document.querySelector(".onload").style.width = percent1+"%";
+				document.getElementById("onload2").style.width = percent1+"%";
+				loadpic();
+				loadtime();
+			}
+		function loadtime()
+		{
+			var now=video.currentTime;
+			var end=video.duration;
+			var output="";
+			if (now/60<10) output+="0";
+			output+=parseInt(now/60);
+			output+=":";
+			if (parseInt(now)%60<10) output+="0";
+			output+=parseInt(now)%60;
+			output+="&nbsp;/&nbsp;";
+			if (end/60<10) output+="0";
+			output+=parseInt(end/60);
+			output+=":";
+			if (parseInt(end)%60<10) output+="0";
+			output+=parseInt(end)%60;
+			document.getElementById("time").innerHTML=output;
+		}
+		function loadpic()
+		{	
+			document.getElementById("img4").style.top=(document.querySelector(".video-container").offsetHeight-document.querySelector(".video-container").offsetHeight/height*14)+"px";
+			document.getElementById("img4").style.left=(document.querySelector(".video-container").offsetWidth-60-document.querySelector(".video-container").offsetWidth/width*72)+"px";
+			if (video.paused==true)
+			{
+				document.getElementById("start").src="./photo/2.png";
+				document.getElementById("img4").style.opacity=0.7;
+			}
+			else
+			{
+				document.getElementById("start").src="./photo/3.png";
+				document.getElementById("img4").style.opacity=0;
+			}
+		}
+        function flv_load() {
+            console.log('isSupported: ' + flvjs.isSupported());
+                var url = jsonurl;
+    
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onload = function (e) {
+                    var mediaDataSource = JSON.parse(xhr.response);
+                    flv_load_mds(mediaDataSource);
+                }
+                xhr.send();
+                var i;
+                var mediaDataSource = {
+                    type: 'mp4'
+                };
+                for (i = 0; i < checkBoxFields.length; i++) {
+                    mediaDataSource[checkBoxFields[i]] = choice[i];
+                }
+                mediaDataSource['url'] = videourl;
+                console.log('MediaDataSource', mediaDataSource);
+                flv_load_mds(mediaDataSource);
+        }
+
+        function flv_load_mds(mediaDataSource) {
+            var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== "undefined") {
+                if (player != null) {
+                    player.unload();
+                    player.detachMediaElement();
+                    player.destroy();
+                    player = null;
+                }
+            }
+            player = flvjs.createPlayer(mediaDataSource, {
+                enableWorker: false,
+                lazyLoadMaxDuration: 3 * 60,
+                seekType: 'range',
+            });
+            player.attachMediaElement(element);
+            player.load();
+        }
+
+		function flv_fullscreen()
+		{
+			element=video;
+			if (element.requestFullscreen) {
+			    element.requestFullscreen();
+			} else if (element.mozRequestFullScreen) {
+			    element.mozRequestFullScreen();
+			} else if (element.msRequestFullscreen) {
+			    element.msRequestFullscreen();
+			} else if (element.oRequestFullscreen) {
+			    element.oRequestFullscreen();
+			} else if (element.webkitRequestFullscreen) {
+			    element.webkitRequestFullScreen();
+			} else {
+			    var docHtml = document.documentElement;
+			    var docBody = document.body;
+			    var videobox = document.getElementById('video');
+			    var cssText = 'width:100%;height:100%;overflow:hidden;';
+			    docHtml.style.cssText = cssText;
+			    docBody.style.cssText = cssText;
+			    videobox.style.cssText = cssText+';'+'margin:0px;padding:0px;';
+			    document.IsFullScreen = true;
+			}
+		}
+		
+		function flv_webfullscreen()
+		{
+			var main=document.querySelector(".mainContainer");
+			main.style.height=window.innerHeight+"px";
+			main.style.width=document.body.clientWidth-20+"px";
+			document.body.style.backgroundColor="black";
+			loadpic();
+		}
+		
+		var video = document.getElementById("video");
+		var togglebtn = document.getElementById('img8');
+		togglebtn.addEventListener('click', function() {
+			if (!document.pictureInPictureElement) {//开启
+				video.requestPictureInPicture().catch(error => {
+					console.log(error,'Video failed to enter Picture-in-Picture mode.');
+				});
+			} else {//关闭
+				document.exitPictureInPicture().catch(error => {
+					console.log(error,'Video failed to leave Picture-in-Picture mode.');
+				});
+			}
+		});
+		
+
+        function flv_start() {
+            if (video.paused==true)
+			{
+				player.play();
+				document.getElementById("start").src="./photo/3.png";
+				document.getElementById("img4").style.opacity=0;
+			}
+			else
+			{
+				document.getElementById("start").src="./photo/2.png";
+				document.getElementById("img4").style.opacity=0.7;
+				player.pause();
+			}
+        }
+		
+		$(document).keydown(function(event){
+			if(event.keyCode == 32){
+				flv_start();
+			}
+		});
+        function flv_destroy() {
+            player.pause();
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+            player = null;
+        }
+
+        function flv_seekto() {
+			var x=c("progress");
+            player.currentTime = parseFloat(x/document.getElementById("progress").offsetWidth*video.duration);
+			player.play();
+			flv_a();
+        }
+
+        function switch_url() {
+            streamURL.className = '';
+            mediaSourceURL.className = 'hidden';
+            saveSettings();
+        }
+
+        function switch_mds() {
+            streamURL.className = 'hidden';
+            mediaSourceURL.className = '';
+            saveSettings();
+        }
+
+        function ls_get(key, def) {
+            try {
+                var ret = localStorage.getItem('flvjs_demo.' + key);
+                if (ret === null) {
+                    ret = def;
+                }
+                return ret;
+            } catch (e) {}
+            return def;
+        }
+
+        function ls_set(key, value) {
+            try {
+                localStorage.setItem('flvjs_demo.' + key, value);
+            } catch (e) {}
+        }
+
+        // function saveSettings() {
+        //     if (mediaSourceURL.className === '') {
+        //         ls_set('inputMode', 'MediaDataSource');
+        //     } else {
+        //         ls_set('inputMode', 'StreamURL');
+        //     }
+        //     var i;
+        //     for (i = 0; i < checkBoxFields.length; i++) {
+        //         var field = checkBoxFields[i];
+        //         /** @type {HTMLInputElement} */
+        //         var checkbox = document.getElementById(field);
+        //         ls_set(field, checkbox.checked ? '1' : '0');
+        //     }
+        //     var msURL = document.getElementById('msURL');
+        //     var sURL = document.getElementById('sURL');
+        //     ls_set('msURL', msURL.value);
+        //     ls_set('sURL', sURL.value);
+        //     console.log('save');
+        // }
+
+        // function loadSettings() {
+        //     var i;
+        //     for (i = 0; i < checkBoxFields.length; i++) {
+        //         var field = checkBoxFields[i];
+        //         /** @type {HTMLInputElement} */
+        //         var checkbox = document.getElementById(field);
+        //         var c = ls_get(field, checkbox.checked ? '1' : '0');
+        //         checkbox.checked = c === '1' ? true : false;
+        //     }
+
+        //     var msURL = document.getElementById('msURL');
+        //     var sURL = document.getElementById('sURL');
+        //     msURL.value = ls_get('msURL', msURL.value);
+        //     sURL.value = ls_get('sURL', sURL.value);
+        //     if (ls_get('inputMode', 'StreamURL') === 'StreamURL') {
+        //         switch_url();
+        //     } else {
+        //         switch_mds();
+        //     }
+        // }
+
+        // function showVersion() {
+        //     var version = flvjs.version;
+        //     document.title = document.title + " (v" + version + ")";
+        // }
+
+        // var logcatbox = document.getElementsByName('logcatbox')[0];
+        // flvjs.LoggingControl.addLogListener(function(type, str) {
+        //     logcatbox.value = logcatbox.value + str + '\n';
+        //     logcatbox.scrollTop = logcatbox.scrollHeight;
+        // });
+
+        // document.addEventListener('DOMContentLoaded', function () {
+        //     streamURL = document.getElementById('streamURL');
+        //     mediaSourceURL = document.getElementById('mediaSourceURL');
+        //     loadSettings();
+        //     showVersion();
+        //     flv_load();
+        // });
+		
+		
+		
+		
+		
+		function c(idname){
+			var objTop = getOffsetTop(document.getElementById(idname));//对象x位置
+			var objLeft = getOffsetLeft(document.getElementById(idname));//对象y位置
+			var mouseX = event.clientX+document.body.scrollLeft;//鼠标x位置
+			var mouseY = event.clientY+document.body.scrollTop;//鼠标y位置
+			//计算点击的相对位置
+			var objX = mouseX-objLeft;
+			var objY = mouseY-objTop;
+			return objX;
+		}
+		function getOffsetTop(obj){
+			var tmp = obj.offsetTop;
+			var val = obj.offsetParent;
+			while(val != null){
+				tmp += val.offsetTop;
+				val = val.offsetParent;
+			}
+			return tmp;
+		}
+		function getOffsetLeft(obj){
+			var tmp = obj.offsetLeft;
+			var val = obj.offsetParent;
+			while(val != null){
+				tmp += val.offsetLeft;
+				val = val.offsetParent;
+			}
+			return tmp;
+		}
+    </script>
+</body>
+
+</html>
