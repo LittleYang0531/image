@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Github文件获取 HTML版</title>
+		<script src="https://cdn.jsdelivr.net/gh/jquery/jquery@3.6.0/dist/jquery.min.js"></script>
+		<style>
+			.dir:link{text-decoration:none;color:orange}
+			.dir:active{text-decoration:none;color:skyblue}
+			.dir:hover{text-decoration:none;color:skyblue!important;}
+			.dir:visited{text-decoration:none;color:orange}
+			.file:link{text-decoration:none;color:green}
+			.file:active{text-decoration:none;color:red}
+			.file:hover{text-decoration:none;color:red!important;}
+			.file:visited{text-decoration:none;color:green}
+		</style>
+	</head>
+	<body>
+		<div id="result">
+			
+		</div>
+		<script>
+			var $_GET = (function(){
+			    var url = window.document.location.href.toString();
+			    var u = url.split("?");
+			    if(typeof(u[1]) == "string"){
+			        u = u[1].split("&");
+			        var get = {};
+			        for(var i in u){
+			            var j = u[i].split("=");
+			            get[j[0]] = j[1];
+			        }
+			        return get;
+			    } else {
+			        return {};
+			    }
+			})();
+			
+			const USER="LittleYang0531";
+			const REPO="Photo";
+			const MAIL="littleyang0531@outlook.com";
+			const TOKEN="ghp_l9G42lEY4L2X"+"hh9y5AhBySh2sNTTgi3rrbMK";
+			
+			var url="https://api.github.com/repos/"+USER+"/"+REPO+"/contents"+$_GET["path"];
+			
+			document.getElementById("result").innerHTML+=
+			"<h2><a href='//github.com/"+USER+"'>"+USER+
+			"</a> / <a href='//github.com/"+USER+"/"+REPO+"'>"+REPO+"</a> - "+$_GET["path"]+"</h2>";
+			
+			$.ajax({
+				url:url,
+				type:'GET',
+				headers:{
+					"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+					"Accept-Language":"zh-CN,en-US;q=0.7,en;q=0.3",
+					"Authorization":'token '+TOKEN,
+				},
+				cache: false,
+				processData: false,
+				contentType: false,
+				success:function(message) {
+					for (var i=0;i<message.length;i++) {
+						if (message[i]["type"]=="dir") {
+							document.getElementById("result").innerHTML+="<p><a href='getfile.html?path=/"+message[i]["path"]+"/' class='dir'>"+message[i]["name"]+"</a></p>";
+						} else if (message[i]["type"]=="file") {
+							// document.getElementById("result").innerHTML+="<p><a href='"+message[i]["download_url"]+"' class='file'>"+message[i]["name"]+"</p>";
+							document.getElementById("result").innerHTML+="<p><a href='//cdn.jsdelivr.net/gh/"+USER+"/"+REPO+"/"+message[i]["path"]+"' class='file'>"+message[i]["name"]+"</p>";
+						}
+					}
+				},
+				error:function(jqXHR,textStatus,errorThrown)
+				{
+				    console.log(jqXHR.responseText);
+				    console.log(jqXHR.status);
+				    console.log(jqXHR.readyState);
+				    console.log(jqXHR.statusText);
+				    console.log(textStatus);
+				    console.log(errorThrown);
+				}
+			});
+		</script>
+	</body>
+</html>
